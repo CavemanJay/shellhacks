@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, List
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -7,16 +7,17 @@ from dataclasses import dataclass
 class User:
     sid: str
     username: str
+    room_name: str
 
 
 @dataclass
 class Message:
-    timestamp: datetime
     user: User
     message: str
+    timestamp: str  # ISO
 
 
 @dataclass
 class Room:
-    users: List[User]
+    user_ids: List[str]
     messages: List[Message]
