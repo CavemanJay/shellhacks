@@ -1,5 +1,6 @@
 import asyncio
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 import socketio
@@ -11,7 +12,8 @@ CREDS_FILE = Path(
 
 @client.event
 async def chat_message(data):
-    print("Received message: ", data)
+    timestamp = datetime.fromisoformat(data['timestamp']).time()
+    print(timestamp, data['user']['username'] + ":", data['message'])
 
 
 @client.event
@@ -34,9 +36,15 @@ async def read_user_input():
             continue
 
         if _input.lower().strip() == "/rooms":
-            await client.emit('list_rooms',callback=print)
+            await client.emit('list_rooms', callback=print) # TODO: Customize callback for displaying
             await client.sleep(0.5)
             continue
+
+        if _input.lower().strip() == "/history":
+            await client.emit('room_history', callback=print)
+            await client.sleep(0.5)
+            continue
+
         await client.emit('chat_message', _input)
         await client.sleep(0.5)
 
@@ -51,7 +59,6 @@ async def main():
 
     await read_user_input()
     await client.disconnect()
-# TODO: Add this format before every message sent <Time stamp> Username : message
 # TODO: Add /history command
 # TODO: Little unrealistic but rough gui if we have time :D
 if __name__ == "__main__":
