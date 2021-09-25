@@ -6,8 +6,13 @@ client = socketio.AsyncClient()
 
 
 @client.event
-def chat_message(data):
+async def chat_message(data):
     print("Received message: ", data)
+
+
+@client.event
+async def room_join(username: str):
+    print(F"SERVER: User {username} has joined the room")
 
 
 async def main():
