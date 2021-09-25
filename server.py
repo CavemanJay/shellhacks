@@ -1,35 +1,57 @@
+from pprint import pprint
 from typing import Dict
+
 import socketio
 from aiohttp import web
-from pprint import pprint
+from loguru import logger
 
-socket = socketio.AsyncServer(async_mode="aiohttp")
+from models import Room, User
+
+server = socketio.AsyncServer(async_mode="aiohttp")
 app = web.Application()
-socket.attach(app)
+server.attach(app)
 
 users = {}
+rooms = {'general': Room([], [])}
 
 
-@socket.event
-def connect(sid: str, environ: Dict, auth: Dict):
-    _key = 'username'
-    if auth.get(_key):
-        users[sid] = auth[_key]
+async def move_user_to_room(room_name: str, user: User):
+    server.enter_room(user.sid, room_name)
+    rooms[room_name].users.append(user)
+    await server.emit("room_join", room=room_name, data=user.username)
+
+
+@server.event
+async def connect(sid: str, environ: Dict, auth: Dict):
+    username = auth.get('username')
+    if username:
+        user = User(sid, username)
+        await move_user_to_room('general', user)
+        users[sid] = user
+        logger.info("User '{}' has connected", username)
     else:
         # TODO: Error handling for when client doesn't provide username
-        socket.disconnect(sid)
-    pprint(users)
+        server.disconnect(sid)
+    # pprint(users)
 
 
-@socket.event
-def disconnect(sid: str):
+@server.event
+async def disconnect(sid: str):
+    user: User = users[sid]
     del users[sid]
+    logger.info("User '{}' disconnected", user.username)
+    # TODO: Remove user from any rooms
 
 
-@socket.event
+@server.event
 async def chat_message(sid, data):
-    print("message ", sid, data)
+    await server.emit('chat_message', skip_sid=sid, data=data)
+
+
+@logger.catch
+def main():
+    web.run_app(app)
 
 
 if __name__ == "__main__":
-    web.run_app(app)
+    main()
