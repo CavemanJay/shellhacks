@@ -1,8 +1,12 @@
-import socketio
 import asyncio
+import tempfile
+from pathlib import Path
 
+import socketio
 
 client = socketio.AsyncClient()
+CREDS_FILE = Path(
+    tempfile.gettempdir(), "shellhacks_chatserver_auth")
 
 
 @client.event
@@ -16,7 +20,12 @@ async def room_join(username: str):
 
 
 async def main():
-    await client.connect('http://localhost:8080', auth={'username': 'client1'})
+    if CREDS_FILE.exists() and CREDS_FILE.read_text():
+        username = CREDS_FILE.read_text()
+    else:
+        username = input("Please enter your username: ")
+        CREDS_FILE.write_text(username)
+    await client.connect('http://localhost:8080', auth={'username': username})
 
     await client.emit('chat_message', "here is the message")
     await client.wait()
