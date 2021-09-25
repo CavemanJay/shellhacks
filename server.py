@@ -56,6 +56,13 @@ async def list_rooms(sid):
 
 
 @server.event
+async def room_history(sid):
+    user: User = users[sid]
+    room: Room = rooms[user.room_name]
+    return list(map(asdict, room.messages))
+
+
+@server.event
 async def disconnect(sid: str):
     user = users[sid]
     del users[sid]
@@ -67,8 +74,10 @@ async def disconnect(sid: str):
 async def chat_message(sid, message_text: str):
     user: User = users[sid]
     message = Message(user, message_text, datetime.now().isoformat())
-
-    logger.debug("Message from {}: {}", user.username, message_text)
+    room: Room = rooms[user.room_name]
+    room.messages.append(message)
+    logger.debug("Message from {} in room {}: {}",
+                 user.username, user.room_name, message_text)
     # TODO: Make sure server sends to proper room
     await server.emit('chat_message', skip_sid=sid, data=asdict(message))
 
