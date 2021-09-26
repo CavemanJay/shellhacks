@@ -75,7 +75,7 @@ async def room_history(sid):
 
 
 @server.event
-async def find_user(sid, username:str):
+async def find_user(sid, username: str):
     target_user = [
         user
         for _, user in users.items()
@@ -106,8 +106,7 @@ async def chat_message(sid, message_text: str):
     save_message(message, user.room_name)
     logger.debug("Message from {} in room {}: {}",
                  user.username, user.room_name, message_text)
-    # TODO: Make sure server sends to proper room
-    await server.emit('chat_message', skip_sid=sid, data=asdict(message))
+    await server.emit('chat_message', room=user.room_name, skip_sid=sid, data=asdict(message))
 
 
 @server.event
