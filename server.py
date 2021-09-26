@@ -53,6 +53,13 @@ async def connect(sid: str, environ: Dict, auth: Dict):
 
 
 @server.event
+async def current_room(sid):
+    user: User = users[sid]
+    room = user.room_name
+    return room
+
+
+@server.event
 async def list_rooms(sid):
     room_info = [
         {'name': name, 'users': len(room.user_ids)}
