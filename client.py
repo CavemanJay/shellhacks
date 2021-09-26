@@ -90,7 +90,7 @@ async def main():
     if CREDS_FILE.exists() and CREDS_FILE.read_text():
         username = CREDS_FILE.read_text()
     else:
-        username = input("Please enter your username: ")
+        username = input("Please enter your username: ").replace(" ", "_")
         CREDS_FILE.write_text(username)
     # await client.connect('http://34.138.239.197:8080', auth={'username': username})
     await client.connect('http://localhost:8080', auth={'username': username})
