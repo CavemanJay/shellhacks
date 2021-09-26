@@ -13,20 +13,20 @@ room_collection = db.get_collection("rooms")
 
 def load_rooms():
     messages = list(message_collection.find())
-    rooms = list(room_collection.find())
+    _rooms = list(room_collection.find())
 
-    x = {
+    rooms = {
         room['name']: Room([], [
             Message(User(message['user']['sid'],
-                         message['user']['username'], room),
+                         message['user']['username'], room['name']),
                     message['message'],
                     message['timestamp'])
             for message in messages
             if str(message['_id']) in room['messages']
         ])
-        for room in rooms
+        for room in _rooms
     }
-    return x
+    return rooms
 
 
 def create_room(name):

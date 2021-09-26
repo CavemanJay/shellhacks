@@ -10,6 +10,17 @@ CREDS_FILE = Path(
     tempfile.gettempdir(), "shellhacks_chatserver_auth")
 
 
+def display_room_history(message_history):
+    for message in message_history:
+        timestamp = datetime.fromisoformat(message['timestamp']).time()
+        print(timestamp, message['user']['username'] + ":", message['message'])
+
+
+def display_rooms(rooms):
+    for room in rooms:
+        print(F"{room['name']} ({room['users']})")
+
+
 @client.event
 async def chat_message(data):
     timestamp = datetime.fromisoformat(data['timestamp']).time()
@@ -37,12 +48,12 @@ async def read_user_input():
             continue
 
         if _input.lower().strip() == "/rooms":
-            await client.emit('list_rooms', callback=print) # TODO: Customize callback for displaying
+            await client.emit('list_rooms', callback=display_rooms)
             await client.sleep(0.5)
             continue
 
         if _input.lower().strip() == "/history":
-            await client.emit('room_history', callback=print)
+            await client.emit('room_history', callback=display_room_history)
             await client.sleep(0.5)
             continue
 
@@ -64,6 +75,7 @@ async def main():
 # TODO: Little unrealistic but rough gui if we have time :D
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
-    except Exception:
-        client.disconnect()
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        exit(1)
