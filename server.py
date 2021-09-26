@@ -18,7 +18,7 @@ app = web.Application()
 server.attach(app)
 
 
-users = {}
+users: Dict[str, User] = {}
 # rooms = {'general': Room([], [])}
 rooms = load_rooms()
 
@@ -49,7 +49,6 @@ async def connect(sid: str, environ: Dict, auth: Dict):
     else:
         # TODO: Error handling for when client doesn't provide username
         server.disconnect(sid)
-    # pprint(users)
 
 
 @server.event
@@ -76,11 +75,26 @@ async def room_history(sid):
 
 
 @server.event
+async def find_user(sid, username:str):
+    target_user = [
+        user
+        for _, user in users.items()
+        if user.username == username
+    ]
+
+    if not target_user:
+        return ''
+
+    user: User = target_user[0]
+    return user.room_name
+
+
+@server.event
 async def disconnect(sid: str):
-    user = users[sid]
+    user: User = users[sid]
     del users[sid]
     logger.info("User '{}' disconnected", user.username)
-    # TODO: Remove user from any rooms
+    rooms[user.room_name].user_ids.remove(sid)
 
 
 @server.event
