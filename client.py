@@ -2,8 +2,8 @@ import asyncio
 import tempfile
 from datetime import datetime
 from pathlib import Path
-
 import socketio
+from aioconsole import ainput
 
 client = socketio.AsyncClient()
 CREDS_FILE = Path(
@@ -23,7 +23,8 @@ async def room_join(username: str):
 
 async def read_user_input():
     while True:
-        _input = input("[+] ")
+        # print("[+] ", end='')
+        _input = await ainput()
         if _input.strip() == '':
             continue
         if _input.lower().strip() in ['/exit', '/quit', '/q']:

@@ -3,25 +3,31 @@ from datetime import datetime
 from pprint import pprint
 from typing import Dict
 
+import pymongo
 import socketio
 from aiohttp import web
 from loguru import logger
 
 from models import Message, Room, User
+from db import create_room, load_rooms, save_message
+
 
 server = socketio.AsyncServer(
     async_mode="aiohttp", logger=False, ping_timeout=10000000)  # High ping time out to avoid disconnecting inactive users.
 app = web.Application()
 server.attach(app)
 
+
 users = {}
-rooms = {'general': Room([], [])}
+# rooms = {'general': Room([], [])}
+rooms = load_rooms()
 
 
 async def move_user_to_room(room_name: str, user: User):
     server.enter_room(user.sid, room_name)
     if room_name not in rooms:
         rooms[room_name] = Room([], [])
+        create_room(room_name)
     rooms[room_name].user_ids.append(user.sid)
 
     if user.room_name:
@@ -76,6 +82,7 @@ async def chat_message(sid, message_text: str):
     message = Message(user, message_text, datetime.now().isoformat())
     room: Room = rooms[user.room_name]
     room.messages.append(message)
+    save_message(message, user.room_name)
     logger.debug("Message from {} in room {}: {}",
                  user.username, user.room_name, message_text)
     # TODO: Make sure server sends to proper room
